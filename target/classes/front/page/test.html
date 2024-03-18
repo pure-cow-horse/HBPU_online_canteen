@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui">
+    <title>湖北理工</title>
+    <link rel="icon" href="./../images/favico.ico">
+    <!--不同屏幕尺寸根字体设置-->
+    <script src="./../js/base.js"></script>
+    <!--element-ui的样式-->
+    <link rel="stylesheet" href="../../backend/plugins/element-ui/index.css" />
+    <!--引入vant样式-->
+    <link rel="stylesheet" href="../styles/vant.min.css"/>
+    <!-- 引入样式  -->
+    <link rel="stylesheet" href="../styles/index.css" />
+    <!--本页面内容的样式-->
+    <link rel="stylesheet" href="./../styles/login.css" />
+</head>
+<body>
+<div id="login" v-loading="loading">
+    <div class="divHead">登录</div>
+    <div class="divContainer">
+        <el-input placeholder=" 请输入邮箱" v-model="form.phone"  maxlength='20'/></el-input>
+        <div class="divSplit"></div>
+        <!-- 切换显示密码输入或验证码输入 -->
+        <el-input v-if="loginType === 'password'" placeholder=" 请输入密码" type="password" v-model="form.password"  maxlength='20'/></el-input>
+        <div v-if="loginType === 'password'" class="divSplit"></div>
+        <el-input v-if="loginType === 'code'" placeholder=" 请输入验证码" v-model="form.code"  maxlength='20'/></el-input>
+        <span v-if="loginType === 'code'" @click='getCode'>获取验证码</span>
+        <!-- 切换按钮 -->
+<!--        <div @click="toggleLoginType" class="toggleButton">-->
+<!--            {{ loginType === 'password' ? '验证码登录' : '密码登录' }}-->
+<!--        </div>-->
+    </div>
+    <div class="divMsg" v-if="msgFlag">邮箱或密码输入不正确，请重新输入</div>
+    <div class="buttonGroup">
+        <el-button type="primary" :class="{btnSubmit:1===1,btnNoPhone:!form.phone,btnPhone:form.phone}" @click="btnLogin">登录</el-button>
+        <el-button type="text" @click="toggleLoginType" class="toggleButton">{{ loginType === 'password' ? '验证码登录' : '密码登录' }}</el-button>
+    </div>
+</div>
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../backend/plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../backend/plugins/element-ui/index.js"></script>
+<!-- 引入vant样式 -->
+<script src="./../js/vant.min.js"></script>
+<!-- 引入axios -->
+<script src="../../backend/plugins/axios/axios.min.js"></script>
+<script src="./../js/request.js"></script>
+<script src="./../api/login.js"></script>
+</body>
+<script>
+    new Vue({
+        el:"#login",
+        data(){
+            return {
+                form:{
+                    phone:'',
+                    password:'',
+                    code:''
+                },
+                loginType: 'password', // 默认为密码登录
+                msgFlag:false,
+                loading:false
+            }
+        },
+        methods: {
+            toggleLoginType() {
+                this.loginType = this.loginType === 'password' ? 'code' : 'password';
+                // 清除表单数据
+                this.form.password = '';
+                this.form.code = '';
+                this.msgFlag = false;
+            },
+            getCode() {
+                if (this.loginType === 'code') {
+                    this.form.code = '';
+                    const regex = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
+                    if (regex.test(this.form.phone)) {
+                        this.msgFlag = false;
+                        // 调用发送验证码的API
+                        sendMsgApi({ phone: this.form.phone });
+                    } else {
+                        this.msgFlag = true;
+                    }
+                }
+            },
+            async btnLogin() {
+                if (this.loginType === 'password' && this.form.phone && this.form.password) {
+                    // 密码登录逻辑
+                    this.loading = true;
+                    const res = await loginApi({ phone: this.form.phone, password: this.form.password });
+                    this.loading = false;
+                    if (res.code === 1) {
+                        sessionStorage.setItem("userPhone", this.form.phone);
+                        window.requestAnimationFrame(() => {
+                            window.location.href = '/front/index.html';
+                        });
+                    } else {
+                        this.$notify({ type: 'warning', message: res.msg });
+                    }
+                } else if (this.loginType === 'code' && this.form.phone && this.form.code) {
+                    // 验证码登录逻辑
+                    this.loading = true;
+                    const res = await loginApi({ phone: this.form.phone, code: this.form.code });
+                    this.loading = false;
+                    if (res.code === 1) {
+                        sessionStorage.setItem("userPhone", this.form.phone);
+                        window.requestAnimationFrame(() => {
+                            window.location.href = '/front/index.html';
+                        });
+                    } else {
+                        this.$notify({ type: 'warning', message: res.msg });
+                    }
+                } else {
+                    this.$notify({ type: 'warning', message: '请输入邮箱和密码或验证码' });
+                }
+            }
+        }
+
+    })
+</script>
+</html>
