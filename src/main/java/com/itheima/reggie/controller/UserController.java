@@ -8,10 +8,8 @@ import com.itheima.reggie.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpSession;
 import java.security.MessageDigest;
@@ -193,4 +191,99 @@ public class UserController {
         }
     }
 
+
+    /**
+     * 更新用户信息，包括头像文件
+     * @param user       接收前端传来的用户信息（除文件外）
+     * @param avatarFile 接收头像文件
+     * @param session    HttpSession提供当前用户ID
+     * @return 返回统一结果类型
+     */
+    @PostMapping(value = "/update", consumes = {"multipart/form-data"})
+    public R<String> updateUserInfo(
+            User user,
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
+            HttpSession session) {
+        // 从session中获取当前登录用户的ID
+        Long userId = (Long) session.getAttribute("user");
+        if (userId == null) {
+            // 用户未登录或会话已超时
+            return R.error("未登录或会话已超时");
+        }
+        // 从数据库获取用户当前的完整信息
+        User currentUser = userService.getById(userId);
+        if (currentUser == null) {
+            // 如果用户不存在
+            return R.error("用户信息不存在");
+        }
+
+        // 更新用户信息，忽略邮箱字段
+        currentUser.setName(user.getName());
+        currentUser.setSex(user.getSex());
+        currentUser.setIdNumber(user.getIdNumber());
+        currentUser.setAvatar(user.getAvatar());
+
+        // 如果用户提交了密码，更新加密后的密码
+        if (StringUtils.isNotBlank(user.getPassword()) && StringUtils.isNotEmpty(user.getPassword())) {
+            String password = encryptPassword(user.getPassword());
+            log.info("password=" + password);
+            currentUser.setPassword(password);
+        }
+
+        // 保存更新后的用户信息到数据库
+        boolean result = userService.updateById(currentUser);
+        if (result) {
+            // 更新成功
+            return R.success("更新用户信息成功");
+        } else {
+            // 更新失败
+            return R.error("更新用户信息失败");
+        }
+    }
+
+    // 在UserController中添加以下方法
+
+    /**
+     * 获取用户信息
+     * @param session 使用HttpSession从中获取当前登录用户ID
+     * @return 返回用户信息
+     */
+    @GetMapping("/info")
+    public R<User> getUserInfo(HttpSession session) {
+        // 尝试从session中获取当前登录用户的ID
+        Long userId = (Long) session.getAttribute("user");
+        if (userId == null) {
+            // 用户未登录或会话已超时
+            return R.error("未登录或会话已超时");
+        }
+
+        try {
+            // 使用用户ID查询信息
+            User userInfo = userService.getById(userId);
+            if (userInfo != null) {
+                // 成功获取用户信息
+                return R.success(userInfo);
+            } else {
+                // 用户信息不存在
+                return R.error("用户信息不存在");
+            }
+        } catch (Exception e) {
+            log.error("获取用户信息时发生错误", e);
+            return R.error("获取用户信息失败");
+        }
+    }
+
+    /**
+     * 用户登出
+     * @param session 使用HttpSession来清除用户会话
+     * @return 返回响应状态
+     */
+    @PostMapping("/loginout")
+    public R<String> logout(HttpSession session) {
+        // 从session中移除用户ID
+        session.removeAttribute("user");
+        // 或者您可以使整个会话失效
+        // session.invalidate();
+        return R.success("登出成功");
+    }
 }

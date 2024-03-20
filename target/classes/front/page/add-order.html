@@ -60,6 +60,32 @@
                 </div>
             </div>
         </div>
+        <!--        &lt;!&ndash; 新增取货方式部分 &ndash;&gt;-->
+        <!--        <div class="pick-up-method">-->
+        <!--            <div class="title">取货方式</div>-->
+        <!--            <select id="method-select" v-model="deliveryMethod">-->
+        <!--                <option value="delivery">外卖配送</option>-->
+        <!--                <option value="self-pickup">到店自提</option>-->
+        <!--            </select>-->
+        <!--        </div>-->
+        <!--        &lt;!&ndash; 配送费用区块 &ndash;&gt;-->
+        <!--        <div class="delivery-fee">-->
+        <!--            <span class="title">配送费</span>-->
+        <!--            <span class="fee">0元</span>-->
+        <!--        </div>-->
+        <!-- 新增取货方式部分 -->
+        <div class="pick-up-method">
+            <div class="title">取货方式</div>
+            <select id="method-select" v-model="deliveryMethod">
+                <option value="delivery">外卖配送</option>
+                <option value="self-pickup">到店自提</option>
+            </select>
+        </div>
+        <!-- 配送费用区块 -->
+        <div class="delivery-fee">
+            <span class="title">配送费</span>
+            <span class="fee">{{ getDeliveryFee }}</span> <!-- 动态显示配送费 -->
+        </div>
         <div class="note">
             <div class="title">备注</div>
             <van-field
@@ -115,6 +141,8 @@
                 },
                 finishTime: '',//送达时间
                 cartData: [],
+                computedDeliveryMethod: "delivery", // 新增属性，用来保存用户选择的取货方式，默认为 "delivery"
+                deliveryMethod: "delivery",
                 note: ''//备注信息
             }
         },
@@ -130,11 +158,20 @@
                     return '99+'
                 }
             },
+            getDeliveryFee() {
+                // 如果选择的是外卖配送
+                if (this.deliveryMethod === "delivery") {
+                    return 1;  // 配送费为1元
+                } else { // 如果选择的是到店自提
+                    return 0;  // 配送费为0元
+                }
+            },
             goodsPrice() {
                 let price = 0
                 this.cartData.forEach(item => {
                     price += (item.number * item.amount)
                 })
+                price += this.getDeliveryFee
                 return price
             }
         },
@@ -165,6 +202,22 @@
                     })
                 }
             },
+
+
+            /*// 在 methods 对象中添加一个新的方法来获取配送费
+
+
+            // 修改计算商品总价的方法，将配送费包含进去
+
+                        goodsPrice() {
+                            let price = 0
+                            this.cartData.forEach(item => {
+                                price += (item.number * item.amount)
+                            })
+                            // 加上配送费
+                            price += this.deliveryFee; // 修改处
+                            return price
+                        },*/
             //获取送达时间
             getFinishTime() {
                 let now = new Date()
@@ -191,6 +244,11 @@
                 } else {
                     this.$notify({type: 'warning', message: res.msg});
                 }
+            },
+            // 新增获取取货方式方法
+            getPickupMethod() {
+                let pickupMethod = document.getElementById("method-select").value;
+                return pickupMethod;
             },
             async goToPaySuccess() {
                 const params = {

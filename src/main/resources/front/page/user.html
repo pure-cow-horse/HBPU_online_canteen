@@ -22,10 +22,10 @@
         <div class="divTitle">
             <i @click="goBack" class="el-icon-arrow-left"></i>个人中心
         </div>
-        <div class="divUser">
+        <div @click="toEditProfilePage" class="divUser">
             <img src="./../images/headPage.png"/>
             <div class="desc">
-                <div class="divName">林之迷 <img src="./../images/women.png"/></div>
+                <div class="divName">{{name}} <img src="./../images/women.png"/></div>
                 <div class="divPhone">{{userPhone}}</div>
             </div>
         </div>
@@ -115,6 +115,10 @@
         methods: {
             goBack() {
                 history.go(-1)
+            },
+            toEditProfilePage() {
+                // 这里填写跳转逻辑
+                window.location.href = '/front/page/edit-profile.html'; // 假设这是修改个人信息页面的URL
             },
             toAddressPage() {
                 window.requestAnimationFrame(() => {

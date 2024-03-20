@@ -19,7 +19,7 @@ public class User implements Serializable {
     private String name;
 
 
-    //手机号
+    //邮箱
     private String phone;
 
 
@@ -34,9 +34,10 @@ public class User implements Serializable {
     //头像
     private String avatar;
 
+    //密码
+    private String password;
 
     //状态 0:禁用，1:正常
     private Integer status;
 
-    private String password;
 }

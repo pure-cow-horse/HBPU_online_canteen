@@ -26,14 +26,28 @@
         <el-input maxlength='20' placeholder=" 请输入邮箱" v-model="form.phone"/>
         </el-input>
         <div class="divSplit"></div>
-        <el-input maxlength='20' placeholder=" 请输入验证码" v-model="form.code"/>
+        <!-- 切换显示密码输入或验证码输入 -->
+        <el-input maxlength='20' placeholder=" 请输入密码" type="password" v-if="loginType === 'password'"
+                  v-model="form.password"/>
         </el-input>
-        <span @click='getCode'>获取验证码</span>
+        <div class="divSplit" v-if="loginType === 'password'"></div>
+        <el-input maxlength='20' placeholder=" 请输入验证码" v-if="loginType === 'code'" v-model="form.code"/>
+        </el-input>
+        <span @click='getCode' v-if="loginType === 'code'">获取验证码</span>
+        <!-- 切换按钮 -->
+        <!--        <div @click="toggleLoginType" class="toggleButton">-->
+        <!--            {{ loginType === 'password' ? '验证码登录' : '密码登录' }}-->
+        <!--        </div>-->
     </div>
-    <div class="divMsg" v-if="msgFlag">邮箱输入不正确，请重新输入</div>
-    <el-button :class="{btnSubmit:1===1,btnNoPhone:!form.phone,btnPhone:form.phone}" @click="btnLogin" type="primary">
-        登录
-    </el-button>
+    <div class="divMsg" v-if="msgFlag">邮箱或密码输入不正确，请重新输入</div>
+    <div class="buttonGroup">
+        <el-button :class="{btnSubmit:1===1,btnNoPhone:!form.phone,btnPhone:form.phone}" @click="btnLogin"
+                   type="primary">登录
+        </el-button>
+        <el-button @click="toggleLoginType" class="toggleButton" type="text">
+            {{ loginType === 'password' ? '验证码登录' : '密码登录' }}
+        </el-button>
+    </div>
 </div>
 <!-- 开发环境版本，包含了有帮助的命令行警告 -->
 <script src="../../backend/plugins/vue/vue.js"></script>
@@ -53,47 +67,68 @@
             return {
                 form: {
                     phone: '',
+                    password: '',
                     code: ''
                 },
+                loginType: 'password', // 默认为密码登录
                 msgFlag: false,
                 loading: false
             }
         },
-        computed: {},
-        created() {
-        },
-        mounted() {
-        },
         methods: {
+            toggleLoginType() {
+                this.loginType = this.loginType === 'password' ? 'code' : 'password';
+                // 清除表单数据
+                this.form.password = '';
+                this.form.code = '';
+                this.msgFlag = false;
+            },
             getCode() {
-                this.form.code = ''
-                const regex = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
-                if (regex.test(this.form.phone)) {
-                    this.msgFlag = false
-                    //this.form.code = (Math.random()*1000000).toFixed(0)
-                    sendMsgApi({phone: this.form.phone})
-                } else {
-                    this.msgFlag = true
+                if (this.loginType === 'code') {
+                    this.form.code = '';
+                    const regex = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
+                    if (regex.test(this.form.phone)) {
+                        this.msgFlag = false;
+                        // 调用发送验证码的API
+                        sendMsgApi({phone: this.form.phone});
+                    } else {
+                        this.msgFlag = true;
+                    }
                 }
             },
             async btnLogin() {
-                if (this.form.phone && this.form.code) {
-                    this.loading = true
-                    const res = await loginApi(this.form)
-                    this.loading = false
+                if (this.loginType === 'password' && this.form.phone && this.form.password) {
+                    // 密码登录逻辑
+                    this.loading = true;
+                    const res = await loginApi({phone: this.form.phone, password: this.form.password});
+                    this.loading = false;
                     if (res.code === 1) {
-                        sessionStorage.setItem("userPhone", this.form.phone)
+                        sessionStorage.setItem("userPhone", this.form.phone);
                         window.requestAnimationFrame(() => {
-                            window.location.href = '/front/index.html'
-                        })
+                            window.location.href = '/front/index.html';
+                        });
+                    } else {
+                        this.$notify({type: 'warning', message: res.msg});
+                    }
+                } else if (this.loginType === 'code' && this.form.phone && this.form.code) {
+                    // 验证码登录逻辑
+                    this.loading = true;
+                    const res = await loginApi({phone: this.form.phone, code: this.form.code});
+                    this.loading = false;
+                    if (res.code === 1) {
+                        sessionStorage.setItem("userPhone", this.form.phone);
+                        window.requestAnimationFrame(() => {
+                            window.location.href = '/front/index.html';
+                        });
                     } else {
                         this.$notify({type: 'warning', message: res.msg});
                     }
                 } else {
-                    this.$notify({type: 'warning', message: '请输入手机号码'});
+                    this.$notify({type: 'warning', message: '请输入邮箱和密码或验证码'});
                 }
             }
         }
+
     })
 </script>
 </html>

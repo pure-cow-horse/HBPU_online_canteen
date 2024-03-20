@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui"
+          name="viewport">
+    <title>修改个人信息</title>
+    <link href="./../images/favico.ico" rel="icon">
+    <!-- 不同屏幕尺寸根字体设置 -->
+    <script src="./../js/base.js"></script>
+    <!-- element-ui的样式 -->
+    <link href="../../backend/plugins/element-ui/index.css" rel="stylesheet"/>
+    <!-- 引入vant样式 -->
+    <link href="../styles/vant.min.css" rel="stylesheet"/>
+    <!-- 引入样式 -->
+    <link href="../styles/index.css" rel="stylesheet"/>
+    <!-- 本页面内容的样式 -->
+    <link href="./../styles/edit-profile.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app" id="edit-profile">
+    <div class="divHead">
+        <div class="divTitle">
+            <i @click="goBack" class="el-icon-arrow-left"></i>修改个人信息
+        </div>
+    </div>
+    <div class="divContent">
+        <form class="profile-form">
+            <!-- 姓名输入字段 -->
+            <label>
+                姓名：<input placeholder="请输入姓名" v-model="userInfo.name">
+            </label>
+            <label>
+                邮箱：<input placeholder="您的邮箱" readonly type="email" v-model="userInfo.phone">
+            </label>
+
+            <!-- 性别选择字段 -->
+            <label>
+                性别：
+                <input id="female" name="sex" type="radio" v-model="userInfo.sex" value="0">
+                <label for="female">女士</label>
+                <input id="male" name="sex" type="radio" v-model="userInfo.sex" value="1">
+                <label for="male">先生</label>
+            </label>
+            <!-- 身份证号输入字段 -->
+            <label>
+                身份证号：<input placeholder="请输入身份证号" v-model="userInfo.idNumber">
+            </label>
+            <!-- 头像上传字段 -->
+            <label>
+                头像：<input @change="onFileChange" type="file">
+            </label>
+            <!-- 密码输入字段 -->
+            <label>
+                密码：<input placeholder="请输入密码" type="password" v-model="userInfo.password">
+            </label>
+            <button @click="updateProfile" type="button">保存</button>
+        </form>
+    </div>
+</div>
+
+<script src="../../backend/plugins/vue/vue.js"></script>
+<script src="../../backend/plugins/element-ui/index.js"></script>
+<script src="../../backend/plugins/axios/axios.min.js"></script>
+<script src="./../js/request.js"></script>
+<script>
+    new Vue({
+        el: '#edit-profile',
+        data() {
+            return {
+                userInfo: {
+                    name: '',
+                    phone: '',  // 注意这里的变量名更改
+                    sex: '',
+                    idNumber: '',
+                    avatar: '', // 头像的字符串形式的数据
+                    password: ''
+                },
+                selectedFile: null // 头像文件
+            };
+        },
+        created() {
+            this.fetchUserInfo();
+        },
+        methods: {
+            goBack() {
+                window.history.back();
+            },
+            fetchUserInfo() {
+                // 向服务器请求当前用户的信息
+                // 替换为您的实际API接口和逻辑
+                axios.get('/user/info').then(response => {
+                    console.log(response.data.code)
+                    if (response.data.code === 1) {
+                        // 假设返回的数据结构是 { success: true, data: { user: {...} } }
+                        this.userInfo = response.data.data;
+                    } else {
+                        this.$message.error('无法获取用户信息');
+                    }
+                }).catch(error => {
+                    console.error('发生错误:', error);
+                    this.$message.error('获取用户信息失败');
+                });
+            },
+            onFileChange(e) {
+                const file = e.target.files[0];
+                this.selectedFile = file;
+                // 将文件转换为base64字符串作为头像
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.userInfo.avatar = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            },
+            updateProfile() {
+                // 构造表单数据
+                const formData = new FormData();
+                // 这里可以添加所有需要提交的字段
+                for (const key in this.userInfo) {
+                    formData.append(key, this.userInfo[key]);
+                }
+                if (this.selectedFile) {
+                    formData.append('avatarFile', this.selectedFile);
+                }
+
+                // 发起更新个人信息的请求
+                // 替换为您的实际API接口和逻辑
+                axios.post('/user/update', formData).then(response => {
+                    if (response.data && response.data.code === 1) {
+                        this.$message.success('更新成功');
+                    } else {
+                        this.$message.error('更新失败: ' + response.data.msg);
+                    }
+                }).catch(error => {
+                    console.error('更新错误:', error);
+                    this.$message.error('更新用户信息失败');
+                });
+            }
+        }
+    });
+</script>
+</body>
+</html>

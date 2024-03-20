@@ -331,3 +331,65 @@
     height: 25rem;
     line-height: 25rem;
 }
+
+.pick-up-method {
+    height: 56rem;
+    background: #ffffff;
+    padding: 3rem 10rem 7rem 16rem;
+    margin-top: 10rem;
+    margin-bottom: 10rem;
+}
+
+.pick-up-method .title {
+    height: 22rem;
+    opacity: 1;
+    font-size: 16rem;
+    font-family: PingFangSC, PingFangSC-Medium;
+    font-weight: 500;
+    color: #333333;
+    line-height: 22rem;
+    letter-spacing: 0;
+    text-align: left;
+}
+
+#method-select {
+    width: 100%;
+    height: 36rem;
+    border: 1px solid #ebebeb;
+    border-radius: 4rem;
+    padding: 0 10rem;
+    margin-top: 10rem;
+    font-size: 14rem;
+    font-family: PingFangSC, PingFangSC-Regular;
+    color: #333333;
+    background-color: #f5f7fa;
+}
+
+/*定义配送费用区块样式*/
+.delivery-fee {
+    height: 56rem; /*区块的高度*/
+    background: #ffffff; /*区块的背景色*/
+    padding: 3rem 10rem 7rem 16rem; /*区块内元素距边框的内边距：上右下左*/
+    margin-top: 10rem; /*区块距上方元素的外边距*/
+}
+
+/*定义配送费用标题样式*/
+.delivery-fee .title {
+    height: 22rem; /*标题的高度*/
+    opacity: 1; /*标题的不透明度*/
+    font-size: 16rem; /*字体大小*/
+    font-family: PingFangSC, PingFangSC-Medium; /*字体样式*/
+    font-weight: 500; /*字体粗细*/
+    color: #333333; /*字体颜色*/
+    line-height: 22rem; /*行高，使文字在行内垂直居中*/
+    letter-spacing: 0; /*字符间隔*/
+    text-align: left; /*文本左对齐*/
+}
+
+/*定义配送费用数额样式*/
+.delivery-fee .fee {
+    float: right; /*费用数额右浮动，使其显示在行的右侧*/
+    font-size: 16rem; /*字体大小*/
+    font-family: PingFangSC, PingFangSC-Regular; /*字体样式*/
+    color: #e94e3c; /*字体颜色*/
+}

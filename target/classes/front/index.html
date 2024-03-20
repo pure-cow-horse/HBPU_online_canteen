@@ -177,7 +177,8 @@
                 <div class="divDishNum">{{detailsDialog.item.number}}</div>
                 <div @click="chooseFlavorClick(detailsDialog.item)"
                      class="divTypes"
-                     v-if="detailsDialog.item.flavors && detailsDialog.item.flavors.length > 0 && !detailsDialog.item.number ">选择规格
+                     v-if="detailsDialog.item.flavors && detailsDialog.item.flavors.length > 0 && !detailsDialog.item.number ">
+                    选择规格
                 </div>
                 <div class="divAdd" v-else>
                     <img @click="addCart(detailsDialog.item)" src="./images/add.png"/>
