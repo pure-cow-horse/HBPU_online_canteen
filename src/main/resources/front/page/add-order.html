@@ -255,6 +255,50 @@
                     remark: this.note,
                     payMethod: 1,
                     addressBookId: this.address.id
+                    // 可能还需要其它提交订单所需的参数
+                };
+                // 发起生成支付宝支付表单的API请求
+                const res = await addOrderApi(params);
+                if (res.code === 1) {
+                    // 如果后端返回成功状态，获取返回的支付宝表单HTML字符串
+                    const alipayFormHtml = res.data;
+                    // 创建表单元素并插入到页面中
+                    const formContainer = document.createElement('div');
+                    formContainer.innerHTML = alipayFormHtml;
+                    document.body.appendChild(formContainer);
+                    // 找到表单元素并提交表单，实现自动跳转到支付宝支付页面
+                    const alipayForm = formContainer.querySelector('form');
+                    alipayForm.submit();
+                } else {
+                    // 如果后端返回错误状态，显示提示信息
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+            async goToPayAlipay() {
+                try {
+                    const res = await createPaymentApi(/* 传递订单信息 */);
+                    if (res.code === 1) {
+                        // 创建一个div元素来容纳支付宝表单
+                        const div = document.createElement('div');
+                        // 将后端返回的HTML字符串设置为div的innerHTML
+                        div.innerHTML = res.data;
+                        // 在文档body中追加这个div
+                        document.body.appendChild(div);
+                        // 获取表单，并调用submit方法，自动提交
+                        document.forms['alipay_form'].submit();
+                    } else {
+                        this.$notify({type: 'warning', message: res.msg});
+                    }
+                } catch (error) {
+                    console.error('创建支付订单失败:', error);
+                    this.$notify({type: 'error', message: '网络请求失败或服务器错误'});
+                }
+            },
+            /*async goToPaySuccess() {
+                const params = {
+                    remark: this.note,
+                    payMethod: 1,
+                    addressBookId: this.address.id
                 }
                 const res = await addOrderApi(params)
                 if (res.code === 1) {
@@ -264,7 +308,7 @@
                 } else {
                     this.$notify({type: 'warning', message: res.msg});
                 }
-            },
+            },*/
             //网络图片路径转换
             imgPathConvert(path) {
                 return imgPath(path)

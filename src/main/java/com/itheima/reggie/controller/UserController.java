@@ -25,7 +25,7 @@ public class UserController {
     private UserService userService;
 
     // 假设您有一个方法来加密密码
-    public static String encryptPassword(String passwordToHash) {
+    public String encryptPassword(String passwordToHash) {
         String generatedPassword = null;
         try {
             // 创建MessageDigest实例，指定加密算法为SHA-256
@@ -155,6 +155,7 @@ public class UserController {
             if (user.getPassword() == null || user.getPassword().isEmpty()) {
                 return R.error("用户未设置密码");
             }
+            log.info("密文密码=" + encryptPassword(password));
             // 验证密码（假设数据库中存储的是加密后的密码）
             if (user.getPassword().equals(encryptPassword(password))) {
                 // 密码匹配，登录成功
@@ -225,6 +226,7 @@ public class UserController {
 
         // 如果用户提交了密码，更新加密后的密码
         if (StringUtils.isNotBlank(user.getPassword()) && StringUtils.isNotEmpty(user.getPassword())) {
+            log.info("user.getPassword()=" + user.getPassword());
             String password = encryptPassword(user.getPassword());
             log.info("password=" + password);
             currentUser.setPassword(password);

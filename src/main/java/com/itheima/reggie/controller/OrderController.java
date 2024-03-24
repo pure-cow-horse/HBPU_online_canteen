@@ -1,7 +1,10 @@
 package com.itheima.reggie.controller;
 
+import com.alipay.api.AlipayApiException;
+import com.alipay.api.internal.util.AlipaySignature;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.itheima.reggie.common.AliPayConfig;
 import com.itheima.reggie.common.BaseContext;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.dto.OrderDto;
@@ -15,9 +18,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,14 +40,149 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/order")
 public class OrderController {
+    private static final String GATEWAY_URL = "https://openapi-sandbox.dl.alipaydev.com/gateway.do";
+    private static final String FORMAT = "JSON";
+    private static final String CHARSET = "utf-8";
+    private static final String SIGN_TYPE = "RSA2";
+    private final String TRADE_FINISHED = "TRADE_FINISHED";
+    private final String TRADE_SUCCESS = "TRADE_SUCCESS";
+    @Resource
+    AliPayConfig aliPayConfig;
     @Autowired
     private OrderService orderService;
-
     @Autowired
     private OrderDetailService orderDetailService;
-
     @Autowired
     private ShoppingCartService shoppingCartService;
+    @Value("${alipay.notify_url}")
+    private String notifyUrl;
+    @Value("${alipay.return_url}")
+    private String returnUrl;
+    @Value("${alipay.charset}")
+    private String charset;
+    @Value("${alipay.alipay_public_key}")
+    private String alipayPublicKey;
+    @Value("${alipay.sign_type}")
+    private String signType;
+
+    // 示例：支付宝异步通知处理
+    @PostMapping("/notify")
+    public void notifyUrl(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        log.info("异步通知");
+        PrintWriter out = response.getWriter();
+        //乱码解决，这段代码在出现乱码时使用
+        request.setCharacterEncoding("utf-8");
+        //获取支付宝POST过来反馈信息
+        Map<String, String> params = new HashMap<>(8);
+        Map<String, String[]> requestParams = request.getParameterMap();
+        for (Map.Entry<String, String[]> stringEntry : requestParams.entrySet()) {
+            String[] values = stringEntry.getValue();
+            String valueStr = "";
+            for (int i = 0; i < values.length; i++) {
+                valueStr = (i == values.length - 1) ? valueStr + values[i]
+                        : valueStr + values[i] + ",";
+            }
+            params.put(stringEntry.getKey(), valueStr);
+        }
+
+        //调用SDK验证签名
+        boolean signVerified = AlipaySignature.rsaCheckV1(params, alipayPublicKey, charset, signType);
+
+        if (!signVerified) {
+            log.error("验签失败");
+            out.print("fail");
+            return;
+        }
+
+        //商户订单号,之前生成的带用户ID的订单号
+        String outTradeNo = new String(params.get("out_trade_no").getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+        //支付宝交易号
+        String tradeNo = new String(params.get("trade_no").getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+        //付款金额
+        String totalAmount = new String(params.get("total_amount").getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+        //交易状态
+        String tradeStatus = new String(params.get("trade_status").getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+
+        /*
+         * 交易状态
+         * TRADE_SUCCESS 交易完成
+         * TRADE_FINISHED 支付成功
+         * WAIT_BUYER_PAY 交易创建
+         * TRADE_CLOSED 交易关闭
+         */
+        log.info("tradeStatus:" + tradeStatus);
+
+        if (tradeStatus.equals(TRADE_FINISHED)) {
+            /*此处可自由发挥*/
+            //判断该笔订单是否在商户网站中已经做过处理
+            //如果没有做过处理，根据订单号（out_trade_no）在商户网站的订单系统中查到该笔订单的详细，并执行商户的业务程序
+            //如果有做过处理，不执行商户的业务程序
+            //注意：
+            //退款日期超过可退款期限后（如三个月可退款），支付宝系统发送该交易状态通知
+        } else if (tradeStatus.equals(TRADE_SUCCESS)) {
+            //判断该笔订单是否在商户网站中已经做过处理
+            //如果没有做过处理，根据订单号（out_trade_no在商户网站的订单系统中查到该笔订单的详细，并执行商户的业务程序
+            //如果有做过处理，不执行商户的业务程序
+
+            // 此处代表交易已经成果，编写实际页面代码
+            // 比如：重置成功，那么往数据库中写入重置金额
+            log.info("trade_no:" + tradeNo);
+            log.info("outTradeNo:" + outTradeNo);
+            log.info("totalAmount:" + totalAmount);
+        }
+
+        out.print("success");
+    }
+
+    /**
+     * 完成支付后的同步通知
+     * 页面跳转同步通知页面路径，接收支付宝回调后，再封装页面数据，直接返回相应页面到前端
+     * @param request
+     * @param response
+     * @throws IOException
+     */
+    @GetMapping("/return")
+    public void returnUrl(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        log.info("同步通知");
+
+        //乱码解决，这段代码在出现乱码时使用
+        request.setCharacterEncoding("utf-8");
+
+        //获取支付宝GET过来反馈信息
+        Map<String, String> params = new HashMap<>(8);
+        Map<String, String[]> requestParams = request.getParameterMap();
+        for (Map.Entry<String, String[]> stringEntry : requestParams.entrySet()) {
+            String[] values = stringEntry.getValue();
+            String valueStr = "";
+            for (int i = 0; i < values.length; i++) {
+                valueStr = (i == values.length - 1) ? valueStr + values[i]
+                        : valueStr + values[i] + ",";
+            }
+            params.put(stringEntry.getKey(), valueStr);
+        }
+
+        //商户订单号,之前生成的带用户ID的订单号
+        String outTradeNo = new String(params.get("out_trade_no").getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+        //支付宝交易号
+        String tradeNo = new String(params.get("trade_no").getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+        //付款金额
+        String totalAmount = new String(params.get("total_amount").getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+
+        log.info("trade_no:" + tradeNo);
+        log.info("outTradeNo:" + outTradeNo);
+        log.info("totalAmount:" + totalAmount);
+
+        //调用SDK验证签名
+        boolean signVerified = AlipaySignature.rsaCheckV1(params, alipayPublicKey, charset, signType);
+
+        if (signVerified) {
+            log.info("验签成功 - 跳转到成功后页面");
+            response.sendRedirect("http://localhost:8080/front/page/pay-success.html");
+        } else {
+            log.info("验签失败 - 跳转到充值页面让用户重新充值");
+            response.sendRedirect("/path-to-recharge-page");
+        }
+    }
 
     /**
      * 用户下单
@@ -44,12 +190,31 @@ public class OrderController {
      * @return 请求 URL: http://localhost:8080/order/submit
      * 负载：{remark: "多加辣椒！！！", payMethod: 1, addressBookId: "1580164651377868802"}
      */
-    @PostMapping("/submit")
+    /*@PostMapping("/submit")
     public R<String> submit(@RequestBody Orders orders) {
         log.info("订单数据：{}", orders);
         orderService.submit(orders);
         return R.success("下单成功");
     }
+*/
+    @PostMapping("/submit")
+    public R<String> submit(@RequestBody Orders orders, HttpServletResponse httpResponse) throws IOException {
+
+        try {
+            // 提交订单和发起支付，返回支付页面表单HTML
+            String payHtml = orderService.submit(orders);
+
+            // 将支付页面表单HTML嵌入到R对象中，并返回
+            return R.success(payHtml);
+
+        } catch (AlipayApiException e) {
+            log.error("支付宝支付失败", e);
+            // 返回支付宝支付失败的信息
+            return R.error("支付宝支付失败，请联系客服");
+        }
+
+    }
+
 
     /**
      * 后台查询订单明细

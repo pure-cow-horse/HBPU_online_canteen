@@ -29,6 +29,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
      * @param setmealDto
      */
     @Transactional
+    @Override
     public void saveWithDish(SetmealDto setmealDto) {
         //保存套餐的基本信息，操作setmeal，执行insert操作
         this.save(setmealDto);
@@ -48,6 +49,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
      * @param ids
      */
     @Transactional
+    @Override
     public void removeWithDish(List<Long> ids) {
         //select count(*) from setmeal where id in (1,2,3) and status = 1
         //查询套餐状态，确定是否可用删除

@@ -29,6 +29,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * @param dishDto
      */
     @Transactional
+    @Override
     public void saveWithFlavor(DishDto dishDto) {
         //保存菜品的基本信息到菜品表dish
         this.save(dishDto);
@@ -52,6 +53,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * @param id
      * @return
      */
+    @Override
     public DishDto getByIdWithFlavor(Long id) {
         //查询菜品基本信息，从dish表查询
         Dish dish = this.getById(id);

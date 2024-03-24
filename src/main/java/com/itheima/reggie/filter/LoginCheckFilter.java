@@ -40,6 +40,7 @@ public class LoginCheckFilter implements Filter {
                 "/common/**",
                 "/user/sendMsg",
                 "/alipay/**",
+                "/order/**",
                 "/user/login"
         };
 

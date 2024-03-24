@@ -95,6 +95,7 @@
                     if (response.data.code === 1) {
                         // 假设返回的数据结构是 { success: true, data: { user: {...} } }
                         this.userInfo = response.data.data;
+                        this.userInfo.password = '';
                     } else {
                         this.$message.error('无法获取用户信息');
                     }

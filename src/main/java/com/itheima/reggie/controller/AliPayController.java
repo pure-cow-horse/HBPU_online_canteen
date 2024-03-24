@@ -4,15 +4,23 @@ import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.request.AlipayTradePagePayRequest;
-import com.itheima.reggie.config.AliPayConfig;
+import com.alipay.easysdk.factory.Factory;
+import com.itheima.reggie.common.AliPayConfig;
 import com.itheima.reggie.entity.AliPay;
+import com.itheima.reggie.entity.Orders;
+import com.itheima.reggie.service.OrderService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @Author
@@ -31,7 +39,8 @@ public class AliPayController {
     private static final String SIGN_TYPE = "RSA2";
     @Resource
     AliPayConfig aliPayConfig;
-
+    @Autowired
+    OrderService orderService;
 
     @GetMapping("/pay") // &subject=xxx&traceNo=xxx&totalAmount=xxx
     public void pay(AliPay aliPay, HttpServletResponse httpResponse) throws Exception {
@@ -57,9 +66,9 @@ public class AliPayController {
         httpResponse.getWriter().close();
     }
 
-    /*@PostMapping("/notify")  // 注意这里必须是POST接口
+    @PostMapping("/notify")  // 注意这里必须是POST接口
     public String payNotify(HttpServletRequest request) throws Exception {
-        if (request.getParameter("trade_status").equals("TRADE_SUCCESS")) {
+        if ("TRADE_SUCCESS".equals(request.getParameter("trade_status"))) {
             System.out.println("=========支付宝异步回调========");
 
             Map<String, String> params = new HashMap<>();
@@ -84,14 +93,10 @@ public class AliPayController {
                 System.out.println("买家付款时间: " + params.get("gmt_payment"));
                 System.out.println("买家付款金额: " + params.get("buyer_pay_amount"));
                 // 更新订单未已支付
-                ShopOrder order = new ShopOrder();
-                order.setId(tradeNo);
-                order.setStatus("1");
-                Date payTime = DateUtil.parse(gmtPayment, "yyyy-MM-dd HH:mm:ss");
-                order.setZhhifuTime(payTime);
-                shopOrderMapper.updateById(order);
+                Orders order = new Orders();
+                orderService.submit(order);
             }
         }
         return "success";
-    }*/
+    }
 }
