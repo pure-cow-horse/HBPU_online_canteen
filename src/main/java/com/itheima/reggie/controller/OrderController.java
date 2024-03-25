@@ -176,8 +176,10 @@ public class OrderController {
         boolean signVerified = AlipaySignature.rsaCheckV1(params, alipayPublicKey, charset, signType);
 
         if (signVerified) {
-            log.info("验签成功 - 跳转到成功后页面");
-            response.sendRedirect("http://localhost:8080/front/page/pay-success.html");
+            String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+            String redirectUrl = baseUrl + "/front/page/pay-success.html";
+            log.info("验签成功 - 跳转到成功后页面: " + redirectUrl);
+            response.sendRedirect(redirectUrl);
         } else {
             log.info("验签失败 - 跳转到充值页面让用户重新充值");
             response.sendRedirect("/path-to-recharge-page");

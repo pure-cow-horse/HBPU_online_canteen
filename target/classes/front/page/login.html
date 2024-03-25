@@ -33,7 +33,8 @@
         <div class="divSplit" v-if="loginType === 'password'"></div>
         <el-input maxlength='20' placeholder=" 请输入验证码" v-if="loginType === 'code'" v-model="form.code"/>
         </el-input>
-        <span @click='getCode' v-if="loginType === 'code'" :disabled="cooldown > 0">{{ cooldown > 0 ? `${cooldown}秒后重试` : '获取验证码' }}</span>
+        <span :disabled="cooldown > 0" @click='getCode'
+              v-if="loginType === 'code'">{{ cooldown > 0 ? `${cooldown}秒后重试` : '获取验证码' }}</span>
         <!-- 切换按钮 -->
         <!--        <div @click="toggleLoginType" class="toggleButton">-->
         <!--            {{ loginType === 'password' ? '验证码登录' : '密码登录' }}-->
