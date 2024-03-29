@@ -23,7 +23,7 @@
             <i @click="goBack" class="el-icon-arrow-left"></i>个人中心
         </div>
         <div @click="toEditProfilePage" class="divUser">
-            <img v-bind:src="userInfo.avatar"/>
+            <img src="./../images/headPage.png"/>
             <div class="desc">
                 <div class="divName">{{ userInfo.name }}
                     <!-- 根据gender显示对应的性别标志 -->
@@ -146,7 +146,7 @@
                     }
                 }).catch(error => {
                     // 处理错误
-                    this.$message.error('获取用户信息失败');
+                    this.$message.error(`获取用户信息失败: ${error.message}`);
                 });
             },
             toEditProfilePage() {

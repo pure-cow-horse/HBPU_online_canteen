@@ -23,12 +23,12 @@
             <i @click="goBack" class="el-icon-arrow-left"></i>个人中心
         </div>
         <div @click="toEditProfilePage" class="divUser">
-            <img v-bind:src="userInfo.avatar"/>
+            <img src="./../images/headPage.png"/>
             <div class="desc">
                 <div class="divName">{{ userInfo.name }}
                     <!-- 根据gender显示对应的性别标志 -->
                     <img src="./../images/women.png" v-if="userInfo.sex === '2'"/>
-                    <img src="./../images/man(1).jpg" v-else-if="userInfo.sex === '1'"/>
+                    <img src="./../images/man.jpg" v-else-if="userInfo.sex === '1'"/>
                 </div>
                 <div class="divPhone">{{ userPhone }}</div>
             </div>

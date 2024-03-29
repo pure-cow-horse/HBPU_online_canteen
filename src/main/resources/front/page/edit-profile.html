@@ -17,6 +17,9 @@
     <link href="../styles/index.css" rel="stylesheet"/>
     <!-- 本页面内容的样式 -->
     <link href="./../styles/edit-profile.css" rel="stylesheet"/>
+    <link href="../../backend/plugins/element-ui/index.css" rel="stylesheet"/>
+
+
 </head>
 <body>
 <div class="app" id="edit-profile">
@@ -47,10 +50,46 @@
             <label>
                 身份证号：<input placeholder="请输入身份证号" v-model="userInfo.idNumber">
             </label>
-            <!-- 头像上传字段 -->
-            <label>
-                头像：<input @change="onFileChange" type="file">
-            </label>
+            <!-- 菜品图片上传 -->
+            <!--<el-form-item label="菜品图片:" prop="image">
+                <el-upload
+                        class="avatar-uploader"
+                        action="/common/upload" &lt;!&ndash; 您的图片上传API &ndash;&gt;
+                :on-change="handleChange"
+                :on-success="handleAvatarSuccess"
+                :show-file-list="false"
+                :before-upload="beforeAvatarUpload"
+                >
+                <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                </el-upload>
+            </el-form-item>-->
+            <!--<div>
+                <el-form-item
+                        class="uploadImg"
+                        label="菜品图片:"
+                        prop="region"
+                >
+                    <el-upload
+                            :on-change="onChange"
+                            :on-success="handleAvatarSuccess"
+                            :show-file-list="false"
+                            action="/common/upload"
+                            class="avatar-uploader"
+                            ref="upload"
+                    >
+                        <img
+                                :src="imageUrl"
+                                class="avatar"
+                                v-if="imageUrl"
+                        ></img>
+                        <i
+                                class="el-icon-plus avatar-uploader-icon"
+                                v-else
+                        ></i>
+                    </el-upload>
+                </el-form-item>
+            </div>-->
             <!-- 密码输入字段 -->
             <label>
                 密码：<input placeholder="请输入密码" type="password" v-model="userInfo.password">
@@ -69,6 +108,7 @@
         el: '#edit-profile',
         data() {
             return {
+                avatarUrl: '', // 用户头像的URL
                 userInfo: {
                     name: '',
                     phone: '',  // 注意这里的变量名更改
@@ -77,6 +117,7 @@
                     avatar: '', // 头像的字符串形式的数据
                     password: ''
                 },
+                imageUrl: '',
                 selectedFile: null // 头像文件
             };
         },
@@ -86,6 +127,29 @@
         methods: {
             goBack() {
                 window.history.back();
+            },
+            handleAvatarSuccess(response, file) {
+                // 当上传头像成功时，服务器返回的数据会传入这个方法
+                // 需要根据服务器返回的实际数据结构来取回头像的路径
+                if (response.success) {
+                    this.avatarUrl = response.url; // 取得头像的URL并进行绑定
+                    this.ruleForm.avatar = response.url; // 更新表单数据
+                } else {
+                    this.$message.error('上传失败，请重试');
+                }
+            },
+            beforeAvatarUpload(file) {
+                // 上传之前对图片文件进行一些预检查
+                const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+
+                if (!isJPG) {
+                    this.$message.error('上传头像图片只能是 JPG/PNG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
             },
             fetchUserInfo() {
                 // 向服务器请求当前用户的信息
